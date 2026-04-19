@@ -286,7 +286,7 @@ export default function App() {
   const [answers, setAnswers] = useState({});
   const [error, setError] = useState(null);
   const [timerActive, setTimerActive] = useState(false);
-  const [timeExpired, setTimeExpired] = useState(false);
+  const [, setTimeExpired] = useState(false);
 
   useEffect(() => {
     fetch(process.env.PUBLIC_URL + "/asep_test.json")
