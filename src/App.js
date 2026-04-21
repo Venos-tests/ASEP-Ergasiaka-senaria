@@ -348,42 +348,58 @@ function generateReportHTML(candidateName, candidateCode, skillResults, date, co
     const trait     = cm ? consistency.traitStability  : "—";
     const pair      = cm ? consistency.pairConsistency : "—";
     const pattern   = cm ? consistency.patternScore    : "—";
+    const components = [
+      {
+        name: "Σταθερότητα χαρακτηριστικών",
+        weight: "40%",
+        value: trait,
+        definition: "Μετρά κατά πόσο ο υποψήφιος επιλέγει με συνέπεια δηλώσεις που αντιστοιχούν στις ίδιες δεξιότητες σε όλη τη διάρκεια της δοκιμασίας. Χαμηλή σταθερότητα υποδηλώνει ότι το προφίλ δεξιοτήτων μεταβάλλεται σημαντικά από τριάδα σε τριάδα."
+      },
+      {
+        name: "Συνοχή ζευγών δηλώσεων",
+        weight: "40%",
+        value: pair,
+        definition: "Εξετάζει αν δηλώσεις που μετρούν την ίδια δεξιότητα και εμφανίζονται σε διαφορετικές τριάδες λαμβάνουν συνεπείς βαθμολογίες. Σοβαρή ασυνέπεια (π.χ. «1η επιλογή» σε μία τριάδα και «3η επιλογή» σε άλλη για την ίδια δεξιότητα) μειώνει τον δείκτη."
+      },
+      {
+        name: "Μοτίβο απαντήσεων",
+        weight: "20%",
+        value: pattern,
+        definition: "Ανιχνεύει μη ρεαλιστικά μοτίβα επιλογών, όπως συστηματική επιλογή κοινωνικά επιθυμητών δηλώσεων (faking good). Σε ένα ipsative τεστ 76 τριάδων, αναμένεται ισορροπημένη κατανομή μεταξύ 1ης, 2ης και 3ης επιλογής."
+      },
+    ];
     return `<div class="section" style="border-left:5px solid ${borderCol};padding-left:59px;">
       <h2 class="section-title">Δείκτης Συνέπειας Απαντήσεων</h2>
-      <p class="section-sub">Εκτιμά την αξιοπιστία και εσωτερική συνοχή των επιλογών του υποψηφίου</p>
-      <div style="display:flex;align-items:center;gap:24;margin-bottom:20px">
-        <div style="font-size:52px;font-weight:800;color:${borderCol};font-family:'Source Sans 3',sans-serif;line-height:1">${overall}%</div>
-        <div style="margin-left:20px">
-          <div style="font-size:18px;font-weight:700;color:${borderCol};margin-bottom:4px">${labelText}</div>
-          <div style="color:#475569;font-size:13px;max-width:440px;line-height:1.5">${noteText}</div>
+      <p class="section-sub">Αξιολογεί την αξιοπιστία και εσωτερική συνοχή των επιλογών του υποψηφίου. <strong>Δεν επηρεάζει τη βαθμολογία δεξιοτήτων</strong> — λειτουργεί ως δείκτης εγκυρότητας για την ερμηνεία των αποτελεσμάτων.</p>
+      <div style="display:flex;align-items:center;gap:24px;margin-bottom:28px;padding:20px;background:#F8FAFC;border-radius:10px;">
+        <div style="font-size:56px;font-weight:800;color:${borderCol};font-family:'Source Sans 3',sans-serif;line-height:1;flex-shrink:0">${overall}%</div>
+        <div>
+          <div style="font-size:19px;font-weight:700;color:${borderCol};margin-bottom:6px">${labelText}</div>
+          <div style="color:#475569;font-size:13px;line-height:1.6;max-width:460px">${noteText}</div>
         </div>
       </div>
-      <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
         <thead>
           <tr style="background:#0F172A;color:#fff">
-            <th style="padding:10px 14px;text-align:left">Συνιστώσα</th>
-            <th style="padding:10px 14px;text-align:center">Βαρύτητα</th>
-            <th style="padding:10px 14px;text-align:center">Τιμή</th>
+            <th style="padding:11px 14px;text-align:left;width:22%">Συνιστώσα</th>
+            <th style="padding:11px 14px;text-align:left">Ορισμός</th>
+            <th style="padding:11px 14px;text-align:center;width:9%">Βαρύτητα</th>
+            <th style="padding:11px 14px;text-align:center;width:9%">Τιμή</th>
           </tr>
         </thead>
         <tbody>
-          <tr style="background:#F8FAFC">
-            <td style="padding:10px 14px">Σταθερότητα χαρακτηριστικών</td>
-            <td style="padding:10px 14px;text-align:center;color:#64748B">40%</td>
-            <td style="padding:10px 14px;text-align:center;font-weight:700;color:${borderCol}">${trait}%</td>
-          </tr>
-          <tr style="background:#fff">
-            <td style="padding:10px 14px">Συνοχή ζευγών δηλώσεων</td>
-            <td style="padding:10px 14px;text-align:center;color:#64748B">40%</td>
-            <td style="padding:10px 14px;text-align:center;font-weight:700;color:${borderCol}">${pair}%</td>
-          </tr>
-          <tr style="background:#F8FAFC">
-            <td style="padding:10px 14px">Μοτίβο απαντήσεων</td>
-            <td style="padding:10px 14px;text-align:center;color:#64748B">20%</td>
-            <td style="padding:10px 14px;text-align:center;font-weight:700;color:${borderCol}">${pattern}%</td>
-          </tr>
+          ${components.map((c, i) => `
+          <tr style="background:${i%2===0?"#F8FAFC":"#fff"};vertical-align:top">
+            <td style="padding:13px 14px;font-weight:700;color:#1E293B">${c.name}</td>
+            <td style="padding:13px 14px;color:#475569;line-height:1.55">${c.definition}</td>
+            <td style="padding:13px 14px;text-align:center;color:#64748B;font-weight:600">${c.weight}</td>
+            <td style="padding:13px 14px;text-align:center;font-weight:800;font-size:15px;color:${borderCol}">${c.value}%</td>
+          </tr>`).join("")}
         </tbody>
       </table>
+      <p style="margin-top:16px;font-size:12px;color:#94A3B8;font-style:italic">
+        ⚠️ Σύμφωνα με τη μεθοδολογία SHL OPQ32: δείκτης &lt;60% υποδηλώνει ότι τα αποτελέσματα χρήζουν προσεκτικής ερμηνείας και ενδέχεται να απαιτηθεί επανεξέταση μέσω δομημένης συνέντευξης.
+      </p>
     </div>`;
   })()}
 
@@ -559,30 +575,7 @@ function ResultsScreen({ data, answers, candidateName, candidateCode, onRestart 
           <button style={styles.restartBtn} onClick={onRestart}>🔄 Νέα Δοκιμασία</button>
         </div>
 
-        {/* ── Consistency Index Block ── */}
-        <div style={{marginTop:28,padding:"20px 22px",borderRadius:14,
-          background:consMeta.bg, border:`2px solid ${consMeta.border}`}}>
-          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
-            <span style={{fontSize:22}}>{consMeta.badge}</span>
-            <span style={{color:consMeta.color,fontWeight:700,fontSize:16}}>Δείκτης Συνέπειας Απαντήσεων</span>
-            <span style={{marginLeft:"auto",fontSize:28,fontWeight:800,color:consMeta.color}}>{consistency.overall}%</span>
-          </div>
-          <p style={{color:"#94A3B8",fontSize:13,margin:"0 0 16px",lineHeight:1.6}}>{consMeta.note}</p>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
-            {[
-              ["Σταθερότητα χαρακτηριστικών", consistency.traitStability, "40%"],
-              ["Συνοχή ζευγών",               consistency.pairConsistency,"40%"],
-              ["Μοτίβο απαντήσεων",           consistency.patternScore,   "20%"],
-            ].map(([label, val, weight]) => (
-              <div key={label} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",
-                borderRadius:10,padding:"12px 14px",textAlign:"center"}}>
-                <div style={{fontSize:20,fontWeight:800,color:consMeta.color}}>{val}%</div>
-                <div style={{color:"#CBD5E1",fontSize:12,marginTop:3}}>{label}</div>
-                <div style={{color:"#475569",fontSize:11,marginTop:2}}>βαρύτητα {weight}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+
       </div>
     </div>
   );
