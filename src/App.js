@@ -534,7 +534,6 @@ function TriadScreen({ data, currentIdx, answers, onAnswer, onPrev, onFinish, ti
 function ResultsScreen({ data, answers, candidateName, candidateCode, onRestart }) {
   const skillResults = computeResults(data, answers);
   const consistency  = computeConsistency(data, answers);
-  const consMeta     = getConsistencyMeta(consistency.overall);
   const date = new Date().toLocaleDateString("el-GR",{day:"numeric",month:"long",year:"numeric"});
 
   function openReport() {
