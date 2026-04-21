@@ -2048,5 +2048,358 @@
         }
       ]
     }
+  ],
+  "consistency_pairs": [
+    {
+      "pair_id": 1,
+      "skill_code": 1,
+      "stmt_a": {
+        "id": "Δ1",
+        "triad": 1
+      },
+      "stmt_b": {
+        "id": "Δ126",
+        "triad": 42
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 2,
+      "skill_code": 1,
+      "stmt_a": {
+        "id": "Δ11",
+        "triad": 4
+      },
+      "stmt_b": {
+        "id": "Δ228",
+        "triad": 76
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 3,
+      "skill_code": 1,
+      "stmt_a": {
+        "id": "Δ63",
+        "triad": 21
+      },
+      "stmt_b": {
+        "id": "Δ185",
+        "triad": 62
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 4,
+      "skill_code": 5,
+      "stmt_a": {
+        "id": "Δ2",
+        "triad": 1
+      },
+      "stmt_b": {
+        "id": "Δ131",
+        "triad": 44
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 5,
+      "skill_code": 5,
+      "stmt_a": {
+        "id": "Δ17",
+        "triad": 6
+      },
+      "stmt_b": {
+        "id": "Δ226",
+        "triad": 76
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 6,
+      "skill_code": 5,
+      "stmt_a": {
+        "id": "Δ60",
+        "triad": 20
+      },
+      "stmt_b": {
+        "id": "Δ180",
+        "triad": 60
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 7,
+      "skill_code": 3,
+      "stmt_a": {
+        "id": "Δ3",
+        "triad": 1
+      },
+      "stmt_b": {
+        "id": "Δ116",
+        "triad": 39
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 8,
+      "skill_code": 3,
+      "stmt_a": {
+        "id": "Δ32",
+        "triad": 11
+      },
+      "stmt_b": {
+        "id": "Δ225",
+        "triad": 75
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 9,
+      "skill_code": 3,
+      "stmt_a": {
+        "id": "Δ65",
+        "triad": 22
+      },
+      "stmt_b": {
+        "id": "Δ164",
+        "triad": 55
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 10,
+      "skill_code": 6,
+      "stmt_a": {
+        "id": "Δ4",
+        "triad": 2
+      },
+      "stmt_b": {
+        "id": "Δ117",
+        "triad": 39
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 11,
+      "skill_code": 6,
+      "stmt_a": {
+        "id": "Δ10",
+        "triad": 4
+      },
+      "stmt_b": {
+        "id": "Δ217",
+        "triad": 73
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 12,
+      "skill_code": 6,
+      "stmt_a": {
+        "id": "Δ55",
+        "triad": 19
+      },
+      "stmt_b": {
+        "id": "Δ173",
+        "triad": 58
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 13,
+      "skill_code": 2,
+      "stmt_a": {
+        "id": "Δ5",
+        "triad": 2
+      },
+      "stmt_b": {
+        "id": "Δ115",
+        "triad": 39
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 14,
+      "skill_code": 2,
+      "stmt_a": {
+        "id": "Δ12",
+        "triad": 4
+      },
+      "stmt_b": {
+        "id": "Δ224",
+        "triad": 75
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 15,
+      "skill_code": 2,
+      "stmt_a": {
+        "id": "Δ61",
+        "triad": 21
+      },
+      "stmt_b": {
+        "id": "Δ186",
+        "triad": 62
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 16,
+      "skill_code": 4,
+      "stmt_a": {
+        "id": "Δ6",
+        "triad": 2
+      },
+      "stmt_b": {
+        "id": "Δ129",
+        "triad": 43
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 17,
+      "skill_code": 4,
+      "stmt_a": {
+        "id": "Δ9",
+        "triad": 3
+      },
+      "stmt_b": {
+        "id": "Δ218",
+        "triad": 73
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 18,
+      "skill_code": 4,
+      "stmt_a": {
+        "id": "Δ50",
+        "triad": 17
+      },
+      "stmt_b": {
+        "id": "Δ166",
+        "triad": 56
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 19,
+      "skill_code": 7,
+      "stmt_a": {
+        "id": "Δ7",
+        "triad": 3
+      },
+      "stmt_b": {
+        "id": "Δ98",
+        "triad": 33
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 20,
+      "skill_code": 7,
+      "stmt_a": {
+        "id": "Δ13",
+        "triad": 5
+      },
+      "stmt_b": {
+        "id": "Δ207",
+        "triad": 69
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 21,
+      "skill_code": 7,
+      "stmt_a": {
+        "id": "Δ45",
+        "triad": 15
+      },
+      "stmt_b": {
+        "id": "Δ170",
+        "triad": 57
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 22,
+      "skill_code": 9,
+      "stmt_a": {
+        "id": "Δ8",
+        "triad": 3
+      },
+      "stmt_b": {
+        "id": "Δ124",
+        "triad": 42
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 23,
+      "skill_code": 9,
+      "stmt_a": {
+        "id": "Δ14",
+        "triad": 5
+      },
+      "stmt_b": {
+        "id": "Δ227",
+        "triad": 76
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 24,
+      "skill_code": 9,
+      "stmt_a": {
+        "id": "Δ64",
+        "triad": 22
+      },
+      "stmt_b": {
+        "id": "Δ177",
+        "triad": 59
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 25,
+      "skill_code": 8,
+      "stmt_a": {
+        "id": "Δ15",
+        "triad": 5
+      },
+      "stmt_b": {
+        "id": "Δ99",
+        "triad": 33
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 26,
+      "skill_code": 8,
+      "stmt_a": {
+        "id": "Δ19",
+        "triad": 7
+      },
+      "stmt_b": {
+        "id": "Δ196",
+        "triad": 66
+      },
+      "type": "same_skill_stability"
+    },
+    {
+      "pair_id": 27,
+      "skill_code": 8,
+      "stmt_a": {
+        "id": "Δ51",
+        "triad": 17
+      },
+      "stmt_b": {
+        "id": "Δ137",
+        "triad": 46
+      },
+      "type": "same_skill_stability"
+    }
   ]
 }
