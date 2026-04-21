@@ -70,6 +70,91 @@ function computeResults(data, answers) {
   })).sort((a, b) => b.ratio - a.ratio);
 }
 
+function computeConsistency(data, answers) {
+  // Build lookup: stmtId -> score (3=first, 2=second, 1=third)
+  const stmtScore = {};
+  data.triads.forEach((triad, idx) => {
+    const ans = answers[idx];
+    if (!ans) return;
+    triad.statements.forEach(stmt => {
+      if (stmt.id === ans.first)  stmtScore[stmt.id] = 3;
+      else if (stmt.id === ans.second) stmtScore[stmt.id] = 2;
+      else if (stmt.id === ans.third)  stmtScore[stmt.id] = 1;
+    });
+  });
+
+  // COMPONENT 1 — Trait Stability (40%)
+  // For each skill, collect all scores and measure variance
+  const skillScores = {};
+  data.triads.forEach(triad => {
+    triad.statements.forEach(stmt => {
+      const sc = stmt.skill_code;
+      if (!skillScores[sc]) skillScores[sc] = [];
+      if (stmtScore[stmt.id] !== undefined) skillScores[sc].push(stmtScore[stmt.id]);
+    });
+  });
+  let totalVariance = 0;
+  const skillCount = Object.keys(skillScores).length;
+  Object.values(skillScores).forEach(scores => {
+    if (scores.length === 0) return;
+    const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
+    const variance = scores.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / scores.length;
+    totalVariance += variance;
+  });
+  const traitStability = Math.max(0, 1 - (totalVariance / (skillCount * 0.9)));
+
+  // COMPONENT 2 — Pair Consistency (40%)
+  // Same-skill pairs: if a skill scores high in one triad and low in another → inconsistency
+  let pairInconsistencies = 0, pairsChecked = 0;
+  if (data.consistency_pairs) {
+    data.consistency_pairs.forEach(pair => {
+      const scoreA = stmtScore[pair.stmt_a.id];
+      const scoreB = stmtScore[pair.stmt_b.id];
+      if (scoreA !== undefined && scoreB !== undefined) {
+        pairsChecked++;
+        const diff = Math.abs(scoreA - scoreB);
+        if (diff === 2) pairInconsistencies += 1.0;   // Most vs Least: serious contradiction
+        else if (diff === 1) pairInconsistencies += 0.3; // mild inconsistency
+      }
+    });
+  }
+  const pairConsistency = pairsChecked > 0
+    ? Math.max(0, 1 - (pairInconsistencies / pairsChecked))
+    : 1;
+
+  // COMPONENT 3 — Response Pattern / Faking Detection (20%)
+  // In a 76-triad ipsative test, expected: 76 firsts, 76 seconds, 76 thirds
+  const allScores = Object.values(stmtScore);
+  const total = allScores.length;
+  let patternScore = 1;
+  if (total > 0) {
+    const mostCount  = allScores.filter(v => v === 3).length;
+    const midCount   = allScores.filter(v => v === 2).length;
+    const leastCount = allScores.filter(v => v === 1).length;
+    const expected = total / 3;
+    const deviation = (
+      Math.abs(mostCount  - expected) +
+      Math.abs(midCount   - expected) +
+      Math.abs(leastCount - expected)
+    ) / (total * 2);
+    patternScore = Math.max(0, 1 - deviation);
+  }
+
+  const overall = 0.40 * traitStability + 0.40 * pairConsistency + 0.20 * patternScore;
+  return {
+    overall:         Math.round(overall         * 100),
+    traitStability:  Math.round(traitStability  * 100),
+    pairConsistency: Math.round(pairConsistency * 100),
+    patternScore:    Math.round(patternScore    * 100),
+  };
+}
+
+function getConsistencyMeta(score) {
+  if (score >= 80) return { label: "Υψηλή Συνέπεια", color: "#10B981", bg: "rgba(16,185,129,0.12)", border: "rgba(16,185,129,0.35)", badge: "✔", note: "Οι απαντήσεις παρουσιάζουν υψηλή αξιοπιστία και εσωτερική συνοχή." };
+  if (score >= 60) return { label: "Μέτρια Συνέπεια", color: "#F59E0B", bg: "rgba(245,158,11,0.10)", border: "rgba(245,158,11,0.35)", badge: "⚠", note: "Ορισμένες ασυνέπειες εντοπίστηκαν. Συνιστάται προσεκτική ερμηνεία." };
+  return                  { label: "Χαμηλή Συνέπεια", color: "#EF4444", bg: "rgba(239,68,68,0.10)",  border: "rgba(239,68,68,0.35)",  badge: "✖", note: "Σημαντικές αντιφάσεις εντοπίστηκαν. Τα αποτελέσματα ενδέχεται να μην είναι αξιόπιστα." };
+}
+
 function SpiderChart({ skillResults, size = 340 }) {
   const cx = size/2, cy = size/2, R = size*0.36, n = skillResults.length;
   function point(i, r) {
@@ -117,7 +202,7 @@ function SpiderChart({ skillResults, size = 340 }) {
   );
 }
 
-function generateReportHTML(candidateName, candidateCode, skillResults, date) {
+function generateReportHTML(candidateName, candidateCode, skillResults, date, consistency) {
   const svgSize = 440;
   const cx = svgSize/2, cy = svgSize/2, R = svgSize*0.33, n = skillResults.length;
   function point(i, r) {
@@ -254,6 +339,54 @@ function generateReportHTML(candidateName, candidateCode, skillResults, date) {
     </div>
   </div>
 
+  ${(()=>{
+    const cm = consistency ? getConsistencyMeta(consistency.overall) : null;
+    const borderCol = cm ? cm.color : "#94A3B8";
+    const labelText = cm ? cm.label : "—";
+    const noteText  = cm ? cm.note  : "";
+    const overall   = cm ? consistency.overall         : "—";
+    const trait     = cm ? consistency.traitStability  : "—";
+    const pair      = cm ? consistency.pairConsistency : "—";
+    const pattern   = cm ? consistency.patternScore    : "—";
+    return `<div class="section" style="border-left:5px solid ${borderCol};padding-left:59px;">
+      <h2 class="section-title">Δείκτης Συνέπειας Απαντήσεων</h2>
+      <p class="section-sub">Εκτιμά την αξιοπιστία και εσωτερική συνοχή των επιλογών του υποψηφίου</p>
+      <div style="display:flex;align-items:center;gap:24;margin-bottom:20px">
+        <div style="font-size:52px;font-weight:800;color:${borderCol};font-family:'Source Sans 3',sans-serif;line-height:1">${overall}%</div>
+        <div style="margin-left:20px">
+          <div style="font-size:18px;font-weight:700;color:${borderCol};margin-bottom:4px">${labelText}</div>
+          <div style="color:#475569;font-size:13px;max-width:440px;line-height:1.5">${noteText}</div>
+        </div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px">
+        <thead>
+          <tr style="background:#0F172A;color:#fff">
+            <th style="padding:10px 14px;text-align:left">Συνιστώσα</th>
+            <th style="padding:10px 14px;text-align:center">Βαρύτητα</th>
+            <th style="padding:10px 14px;text-align:center">Τιμή</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="background:#F8FAFC">
+            <td style="padding:10px 14px">Σταθερότητα χαρακτηριστικών</td>
+            <td style="padding:10px 14px;text-align:center;color:#64748B">40%</td>
+            <td style="padding:10px 14px;text-align:center;font-weight:700;color:${borderCol}">${trait}%</td>
+          </tr>
+          <tr style="background:#fff">
+            <td style="padding:10px 14px">Συνοχή ζευγών δηλώσεων</td>
+            <td style="padding:10px 14px;text-align:center;color:#64748B">40%</td>
+            <td style="padding:10px 14px;text-align:center;font-weight:700;color:${borderCol}">${pair}%</td>
+          </tr>
+          <tr style="background:#F8FAFC">
+            <td style="padding:10px 14px">Μοτίβο απαντήσεων</td>
+            <td style="padding:10px 14px;text-align:center;color:#64748B">20%</td>
+            <td style="padding:10px 14px;text-align:center;font-weight:700;color:${borderCol}">${pattern}%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>`;
+  })()}
+
   <div class="footer">
     <span class="footer-text">Δοκιμασία Εργασιακών Συμπεριφορών · ΑΣΕΠ 2026</span>
     <span class="footer-text">⚠️ Εμπιστευτικό έγγραφο</span>
@@ -384,10 +517,12 @@ function TriadScreen({ data, currentIdx, answers, onAnswer, onPrev, onFinish, ti
 
 function ResultsScreen({ data, answers, candidateName, candidateCode, onRestart }) {
   const skillResults = computeResults(data, answers);
+  const consistency  = computeConsistency(data, answers);
+  const consMeta     = getConsistencyMeta(consistency.overall);
   const date = new Date().toLocaleDateString("el-GR",{day:"numeric",month:"long",year:"numeric"});
 
   function openReport() {
-    const html = generateReportHTML(candidateName, candidateCode, skillResults, date);
+    const html = generateReportHTML(candidateName, candidateCode, skillResults, date, consistency);
     const win = window.open("","_blank");
     win.document.write(html);
     win.document.close();
@@ -422,6 +557,31 @@ function ResultsScreen({ data, answers, candidateName, candidateCode, onRestart 
         <div style={{display:"flex",gap:12,flexWrap:"wrap",marginTop:8}}>
           <button style={styles.reportBtn} onClick={openReport}>📄 Αναλυτική Αναφορά (νέο tab)</button>
           <button style={styles.restartBtn} onClick={onRestart}>🔄 Νέα Δοκιμασία</button>
+        </div>
+
+        {/* ── Consistency Index Block ── */}
+        <div style={{marginTop:28,padding:"20px 22px",borderRadius:14,
+          background:consMeta.bg, border:`2px solid ${consMeta.border}`}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+            <span style={{fontSize:22}}>{consMeta.badge}</span>
+            <span style={{color:consMeta.color,fontWeight:700,fontSize:16}}>Δείκτης Συνέπειας Απαντήσεων</span>
+            <span style={{marginLeft:"auto",fontSize:28,fontWeight:800,color:consMeta.color}}>{consistency.overall}%</span>
+          </div>
+          <p style={{color:"#94A3B8",fontSize:13,margin:"0 0 16px",lineHeight:1.6}}>{consMeta.note}</p>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
+            {[
+              ["Σταθερότητα χαρακτηριστικών", consistency.traitStability, "40%"],
+              ["Συνοχή ζευγών",               consistency.pairConsistency,"40%"],
+              ["Μοτίβο απαντήσεων",           consistency.patternScore,   "20%"],
+            ].map(([label, val, weight]) => (
+              <div key={label} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",
+                borderRadius:10,padding:"12px 14px",textAlign:"center"}}>
+                <div style={{fontSize:20,fontWeight:800,color:consMeta.color}}>{val}%</div>
+                <div style={{color:"#CBD5E1",fontSize:12,marginTop:3}}>{label}</div>
+                <div style={{color:"#475569",fontSize:11,marginTop:2}}>βαρύτητα {weight}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
