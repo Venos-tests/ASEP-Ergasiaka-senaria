@@ -1,11 +1,7 @@
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "ALLOWALL"
-    Content-Security-Policy = "frame-ancestors *"
-    Access-Control-Allow-Origin = "*"
-
-[[headers]]
-  for = "/*.json"
-  [headers.values]
-    Access-Control-Allow-Origin = "*"
+<iframe 
+  src="https://guileless-marigold-093a6b.netlify.app" 
+  width="100%" 
+  height="900px" 
+  frameborder="0"
+  style="border:none;">
+</iframe>
