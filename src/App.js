@@ -1,5 +1,329 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
+// ================================================================
+// CLASSIFICATION MODULE v2.0 — ενσωματωμένο στο App.js
+// ================================================================
+
+const SKILLS = {
+  1: { name: "Προσανατολισμός στον πολίτη",            maxScore: 40, p60: 0.686, p80: 0.729 },
+  2: { name: "Ομαδικότητα",                            maxScore: 69, p60: 0.681, p80: 0.714 },
+  3: { name: "Προσαρμοστικότητα",                      maxScore: 57, p60: 0.682, p80: 0.719 },
+  4: { name: "Προσανατολισμός στο αποτέλεσμα",         maxScore: 46, p60: 0.684, p80: 0.725 },
+  5: { name: "Οργάνωση & προγραμματισμός",             maxScore: 56, p60: 0.683, p80: 0.720 },
+  6: { name: "Επίλυση προβλημάτων & δημιουργικότητα",  maxScore: 44, p60: 0.685, p80: 0.727 },
+  7: { name: "Επαγγελματισμός & ακεραιότητα",          maxScore: 60, p60: 0.682, p80: 0.718 },
+  8: { name: "Διαχείριση γνώσης",                      maxScore: 50, p60: 0.684, p80: 0.723 },
+  9: { name: "Ηγετικότητα",                            maxScore: 34, p60: 0.687, p80: 0.735 },
+};
+
+const PROFILE_CATEGORIES = [
+  {
+    id: "leadership", code: 1,
+    name: "Ηγετικά & Επιτελικά Στελέχη",
+    ucf: "Leading and Deciding",
+    color: "#1B3A6B", colorLight: "#E8EEF8", icon: "★",
+    description: "Στελέχη σε θέσεις ευθύνης που διαχειρίζονται ομάδες, πόρους και δημόσιες πολιτικές. Αναλαμβάνουν πρωτοβουλίες, λαμβάνουν αποφάσεις υπό πίεση και καθοδηγούν με σαφήνεια.",
+    criticals: [9, 4, 2],
+    weights:   [1, 2, 1, 2, 2, 2, 2, 2, 3],
+  },
+  {
+    id: "frontoffice", code: 2,
+    name: "Υπάλληλοι Εξυπηρέτησης & Πρώτης Γραμμής",
+    ucf: "Supporting & Co-operating / Interacting & Presenting",
+    color: "#0E6655", colorLight: "#E4F5F1", icon: "◉",
+    description: "Υπάλληλοι σε άμεση επαφή με το κοινό (ΚΕΠ, ΕΦΚΑ, ΔΟΥ). Χαρακτηρίζονται από υψηλή ενσυναίσθηση, επικοινωνία και προσαρμοστικότητα στις ανάγκες του πολίτη.",
+    criticals: [1, 3, 7],
+    weights:   [3, 2, 2, 1, 1, 1, 2, 1, 1],
+  },
+  {
+    id: "analyst", code: 3,
+    name: "Αναλυτές & Εμπειρογνώμονες",
+    ucf: "Analysing and Interpreting",
+    color: "#5B2C6F", colorLight: "#F0EAF6", icon: "◆",
+    description: "Υπάλληλοι σε νομικά τμήματα, οικονομικές υπηρεσίες και τμήματα μελετών. Παράγουν αναλύσεις, εκθέσεις και τεκμηριωμένες προτάσεις πολιτικής.",
+    criticals: [6, 8, 4],
+    weights:   [1, 1, 1, 2, 2, 3, 2, 3, 1],
+  },
+  {
+    id: "backoffice", code: 4,
+    name: "Διαχειριστές Λειτουργιών & Back-office",
+    ucf: "Organising and Executing",
+    color: "#784212", colorLight: "#FDF0E6", icon: "▣",
+    description: "Η «ραχοκοκαλιά» της δημόσιας διοίκησης. Εξασφαλίζουν τη συνέχεια των υπηρεσιών μέσω μεθοδικής οργάνωσης, τήρησης προθεσμιών και προσεκτικής διαχείρισης εγγράφων.",
+    criticals: [4, 5, 7],
+    weights:   [1, 2, 2, 3, 2, 1, 2, 1, 1],
+  },
+  {
+    id: "innovation", code: 5,
+    name: "Στελέχη Καινοτομίας & Ψηφιακού Μετασχηματισμού",
+    ucf: "Creating and Conceptualising",
+    color: "#1A5276", colorLight: "#E8F4FD", icon: "◈",
+    description: "Υπάλληλοι ψηφιακών υπηρεσιών και απλούστευσης διαδικασιών. Συνδυάζουν δημιουργική σκέψη με διαρκή μάθηση και αποτελεσματική διαχείριση αλλαγών.",
+    criticals: [6, 3, 8],
+    weights:   [1, 2, 3, 2, 1, 3, 1, 3, 1],
+  },
+  {
+    id: "field", code: 6,
+    name: "Υπάλληλοι Πεδίου & Επιθεωρητές",
+    ucf: "Adapting and Coping / Organising and Executing",
+    color: "#4D5656", colorLight: "#F2F3F4", icon: "◎",
+    description: "Ελεγκτές (ΣΕΠΕ, ΑΑΔΕ), μηχανικοί και επιθεωρητές που εργάζονται εκτός γραφείου. Απαιτούν ανθεκτικότητα, οργάνωση και ικανότητα απόφασης υπό δύσκολες συνθήκες.",
+    criticals: [3, 4, 7],
+    weights:   [2, 2, 2, 2, 2, 2, 2, 2, 1],
+  },
+];
+
+function _tier(value, skillCode) {
+  const sk = SKILLS[skillCode];
+  if (value >= sk.p80) return "high";
+  if (value >= sk.p60) return "medium";
+  return "low";
+}
+function _tierColor(tier) {
+  return tier === "high" ? "#1E8449" : tier === "medium" ? "#D35400" : "#C0392B";
+}
+function _tierLabel(tier) {
+  return tier === "high" ? ">P80 ✓" : tier === "medium" ? "P60–80 ~" : "<P60 ✗";
+}
+
+function classifyCandidate(normalizedScores) {
+  const categoryScores = {};
+  PROFILE_CATEGORIES.forEach(cat => {
+    let weighted = 0, totalWeight = 0;
+    cat.weights.forEach((w, idx) => {
+      weighted    += (normalizedScores[idx + 1] || 0) * w;
+      totalWeight += w;
+    });
+    categoryScores[cat.id] = weighted / totalWeight;
+  });
+  const sorted = Object.entries(categoryScores).sort((a, b) => b[1] - a[1]);
+  const category  = PROFILE_CATEGORIES.find(c => c.id === sorted[0][0]);
+  const secondary = PROFILE_CATEGORIES.find(c => c.id === sorted[1][0]);
+  const topSkills = Object.entries(normalizedScores)
+    .sort((a, b) => b[1] - a[1]).slice(0, 3)
+    .map(([code, val]) => ({ code: +code, name: SKILLS[+code].name, value: val }));
+  return {
+    category, score: sorted[0][1],
+    secondary, secondaryScore: sorted[1][1],
+    allCategoryDetails: PROFILE_CATEGORIES.map(cat => ({
+      ...cat, score: categoryScores[cat.id],
+    })).sort((a, b) => b.score - a.score),
+    topSkills,
+  };
+}
+
+function assessRoleFit(normalizedScores, categoryId) {
+  if (!categoryId) return null;
+  const cat = PROFILE_CATEGORIES.find(c => c.id === categoryId);
+  if (!cat) return null;
+  const critDetails = cat.criticals.map(code => ({
+    code, value: normalizedScores[code] || 0,
+    tier: _tier(normalizedScores[code] || 0, code),
+    name: SKILLS[code].name,
+    p60: SKILLS[code].p60, p80: SKILLS[code].p80,
+  }));
+  const above_p80     = critDetails.filter(d => d.tier === "high").length;
+  const any_below_p60 = critDetails.some(d => d.tier === "low");
+  if (any_below_p60) return {
+    verdict: "Ακατάλληλος", color: "#C0392B", bg: "#FDEDEC", border: "#E74C3C", icon: "✗",
+    reason: "Τουλάχιστον μία κρίσιμη δεξιότητα κάτω από P60. Δεν πληρούνται τα ελάχιστα κατώφλια για τη θέση.",
+    cat, critDetails, above_p80, any_below_p60,
+  };
+  if (above_p80 >= 2) return {
+    verdict: "Άμεσα κατάλληλος", color: "#1E8449", bg: "#EAFAF1", border: "#27AE60", icon: "✓",
+    reason: `${above_p80} κρίσιμες δεξιότητες υπερβαίνουν το P80 και όλες βρίσκονται άνω του P60.`,
+    cat, critDetails, above_p80, any_below_p60,
+  };
+  return {
+    verdict: "Επαρκής / Υπό ανάπτυξη", color: "#D35400", bg: "#FEF5EC", border: "#E67E22", icon: "~",
+    reason: "1 κρίσιμη >P80, υπόλοιπες στη ζώνη P60–P80. Απαιτείται ανάπτυξη πριν την πλήρη ανάθεση.",
+    cat, critDetails, above_p80, any_below_p60,
+  };
+}
+
+function renderClassificationReport(classResult, candidateName, normalizedScores, fitResult) {
+  const { category, score, secondary, secondaryScore, allCategoryDetails, topSkills } = classResult;
+  const fit  = fitResult || null;
+  const ns   = normalizedScores || null;
+  const name = candidateName || "Υποψήφιος";
+  const hdrColor = fit ? fit.color : category.color;
+
+  const fitHTML = fit ? `
+  <div style="background:${fit.bg};border-left:4px solid ${fit.color};padding:14px 22px;
+              display:flex;align-items:center;gap:16px;border-bottom:1px solid ${fit.border}30;">
+    <div style="width:44px;height:44px;border-radius:50%;background:${fit.color};color:#fff;
+                display:flex;align-items:center;justify-content:center;font-size:20px;
+                font-weight:700;flex-shrink:0;">${fit.icon}</div>
+    <div style="flex:1;">
+      <div style="font-size:10px;color:${fit.color};letter-spacing:1.2px;
+                  text-transform:uppercase;margin-bottom:1px;">
+        Αξιολόγηση καταλληλότητας · ${fit.cat.name}</div>
+      <div style="font-size:17px;font-weight:700;color:${fit.color};margin-bottom:3px;">
+        ${fit.verdict}</div>
+      <div style="font-size:12px;color:#666;line-height:1.5;">${fit.reason}</div>
+    </div>
+  </div>
+  <div style="background:#fff;border-bottom:1px solid #e8e8e8;padding:12px 22px;">
+    <div style="font-size:10px;color:#999;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:8px;">
+      Κρίσιμες δεξιότητες θέσης
+      (P60≈${Math.round(fit.critDetails[0].p60 * 100)}% / P80≈${Math.round(fit.critDetails[0].p80 * 100)}%)
+    </div>
+    ${fit.critDetails.map(d => `
+    <div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:0.5px solid #f2f2f2;">
+      <div style="width:8px;height:8px;border-radius:50%;background:${_tierColor(d.tier)};flex-shrink:0;"></div>
+      <div style="flex:1;font-size:12.5px;color:#222;">${d.name}</div>
+      <div style="font-size:12px;font-weight:700;color:${_tierColor(d.tier)};min-width:36px;text-align:right;">
+        ${Math.round(d.value * 100)}%</div>
+      <div style="font-size:11px;color:${_tierColor(d.tier)};min-width:60px;text-align:right;">
+        ${_tierLabel(d.tier)}</div>
+    </div>`).join('')}
+    <div style="font-size:10.5px;color:#999;margin-top:8px;line-height:1.7;">
+      <span style="color:#1E8449;font-weight:600;">✓ Άμεσα κατάλληλος</span>
+      = 2+ κρίσιμες &gt;P80 &amp; όλες &gt;P60 &nbsp;·&nbsp;
+      <span style="color:#D35400;font-weight:600;">~ Επαρκής</span>
+      = 1 κρίσιμη &gt;P80 &amp; όλες &gt;P60 &nbsp;·&nbsp;
+      <span style="color:#C0392B;font-weight:600;">✗ Ακατάλληλος</span>
+      = οποιαδήποτε &lt;P60
+    </div>
+  </div>` : '';
+
+  const topSkillsHTML = topSkills.map(s => `
+    <div style="display:inline-flex;align-items:center;gap:6px;background:${category.colorLight};
+                border:1px solid ${category.color}30;border-radius:4px;padding:4px 10px;
+                margin:3px 4px 3px 0;font-size:12px;color:${category.color};">
+      <span style="font-weight:600;">${s.name}</span>
+      <span style="opacity:0.7;">${Math.round(s.value * 100)}%</span>
+    </div>`).join('');
+
+  const barHTML = allCategoryDetails.map(cat => {
+    const pct = Math.round(cat.score * 100), isTop = cat.id === category.id;
+    return `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
+      <div style="width:210px;font-size:12px;flex-shrink:0;line-height:1.3;
+                  color:${isTop ? cat.color : '#666'};font-weight:${isTop ? '600' : '400'};">
+        ${cat.name}</div>
+      <div style="flex:1;background:#eee;border-radius:3px;height:9px;overflow:hidden;">
+        <div style="width:${pct}%;background:${isTop ? cat.color : '#bbb'};height:100%;border-radius:3px;"></div>
+      </div>
+      <div style="width:36px;font-size:12px;text-align:right;
+                  color:${isTop ? cat.color : '#999'};font-weight:${isTop ? '600' : '400'};">${pct}%</div>
+      ${isTop ? `<div style="font-size:11px;background:${cat.color};color:#fff;
+                 padding:2px 7px;border-radius:10px;margin-left:4px;">✓ Κύρια</div>` : ''}
+    </div>`;
+  }).join('');
+
+  const critCodes = fit ? fit.critDetails.map(d => d.code) : [];
+
+  const skillProfileHTML = ns ? `
+  <div style="background:#fafafa;border:1px solid #e0e0e0;border-top:none;padding:16px 22px 18px;">
+    <div style="font-size:11px;color:#999;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">
+      Πλήρες προφίλ δεξιοτήτων
+      ${fit ? `<span style="font-weight:400;text-transform:none;letter-spacing:0;"> — ★ κρίσιμες &nbsp;
+        <span style="color:#1E8449;">▏</span>P80 &nbsp;
+        <span style="color:#E67E22;">▏</span>P60</span>` : ''}
+    </div>
+    ${Object.entries(SKILLS).map(([code, sk]) => {
+      const val = ns[+code] || 0, pct = Math.round(val * 100);
+      const isCrit = critCodes.includes(+code);
+      const tier   = isCrit ? _tier(val, +code) : null;
+      const barClr = isCrit ? _tierColor(tier) : "#c0c0c0";
+      return `
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:5px;">
+        <div style="font-size:11px;width:196px;flex-shrink:0;line-height:1.3;
+                    color:${isCrit ? '#222' : '#999'};font-weight:${isCrit ? '600' : '400'};">
+          ${isCrit ? '★ ' : ''}${code}. ${sk.name}</div>
+        <div style="flex:1;background:#eee;border-radius:3px;height:8px;overflow:hidden;position:relative;">
+          <div style="position:absolute;left:0;top:0;height:100%;width:${pct}%;
+                      background:${barClr};border-radius:3px;"></div>
+          <div style="position:absolute;left:${Math.round(sk.p80 * 100)}%;top:-2px;width:1.5px;
+                      height:calc(100% + 4px);background:#1E8449;opacity:0.7;"></div>
+          <div style="position:absolute;left:${Math.round(sk.p60 * 100)}%;top:-2px;width:1.5px;
+                      height:calc(100% + 4px);background:#E67E22;opacity:0.65;"></div>
+        </div>
+        <div style="font-size:11px;min-width:30px;text-align:right;
+                    color:${isCrit ? barClr : '#bbb'};font-weight:${isCrit ? '600' : '400'};">${pct}%</div>
+        ${isCrit
+          ? `<div style="font-size:10px;color:${barClr};min-width:52px;text-align:right;">${_tierLabel(tier)}</div>`
+          : `<div style="min-width:52px;"></div>`}
+      </div>`;
+    }).join('')}
+  </div>
+  <div style="background:#f5f5f5;border:1px solid #e0e0e0;border-top:none;padding:9px 22px;">
+    <div style="font-size:10px;color:#bbb;line-height:1.6;">
+      <strong style="color:#aaa;">Μεθοδολογία cutoffs:</strong>
+      P80/P60 βάσει θεωρητικής κατανομής ipsative (uniform). Mean=66.7% αναλλοίωτο.
+      P80≈72–74%, P60≈68–69% — διαφέρουν ανά δεξιότητα. Θα επικαιροποιηθούν με empirical data (1Γ/2025).
+    </div>
+  </div>` : '';
+
+  return `
+<div style="font-family:Arial,sans-serif;max-width:720px;margin:24px auto 0;
+            border-top:3px solid ${hdrColor};padding-top:0;">
+  <div style="background:${hdrColor};color:#fff;padding:14px 22px;
+              display:flex;justify-content:space-between;align-items:center;">
+    <div>
+      <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;
+                  opacity:0.8;margin-bottom:3px;">Προφίλ Υποψηφίου · ΑΣΕΠ</div>
+      <div style="font-size:18px;font-weight:700;">${name}</div>
+    </div>
+    <div style="text-align:right;font-size:11px;opacity:0.8;">
+      UCF / OPQ32 · Ενιαίο Πλαίσιο Δεξιοτήτων ΔΥ</div>
+  </div>
+  ${fitHTML}
+  <div style="background:${category.colorLight};border:1px solid ${category.color}30;
+              border-top:none;padding:18px 22px;">
+    <div style="display:flex;align-items:flex-start;gap:16px;">
+      <div style="font-size:28px;color:${category.color};line-height:1;
+                  flex-shrink:0;margin-top:3px;">${category.icon}</div>
+      <div style="flex:1;">
+        <div style="font-size:11px;color:${category.color};letter-spacing:1px;
+                    text-transform:uppercase;margin-bottom:2px;">Κατηγορία Προφίλ</div>
+        <div style="font-size:19px;font-weight:700;color:${category.color};
+                    margin-bottom:2px;">${category.name}</div>
+        <div style="font-size:12px;color:#777;margin-bottom:10px;">
+          UCF: <em>${category.ucf}</em></div>
+        <div style="font-size:13px;color:#333;line-height:1.6;">${category.description}</div>
+      </div>
+      <div style="text-align:center;flex-shrink:0;">
+        <div style="font-size:32px;font-weight:700;color:${category.color};">
+          ${Math.round(score * 100)}</div>
+        <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;">
+          Fit<br>Score</div>
+      </div>
+    </div>
+    <div style="margin-top:12px;border-top:1px solid ${category.color}20;padding-top:10px;">
+      <div style="font-size:11px;color:#888;margin-bottom:6px;text-transform:uppercase;
+                  letter-spacing:0.8px;">Δυνατότερες δεξιότητες</div>
+      ${topSkillsHTML}
+    </div>
+  </div>
+  <div style="background:#f9f9f9;border:1px solid #e0e0e0;border-top:none;
+              padding:10px 22px;display:flex;align-items:center;gap:12px;">
+    <div style="font-size:11px;color:#888;text-transform:uppercase;
+                letter-spacing:0.8px;white-space:nowrap;">Δευτερεύον προφίλ:</div>
+    <div style="font-size:13px;color:#444;font-weight:600;">${secondary.name}</div>
+    <div style="font-size:12px;color:#999;">(${Math.round(secondaryScore * 100)}%)</div>
+  </div>
+  <div style="background:#fff;border:1px solid #e0e0e0;border-top:none;padding:18px 22px;">
+    <div style="font-size:12px;color:#888;text-transform:uppercase;
+                letter-spacing:0.8px;margin-bottom:14px;">Συμβατότητα με κατηγορίες</div>
+    ${barHTML}
+  </div>
+  ${skillProfileHTML}
+  <div style="background:#f0f0f0;padding:8px 22px;font-size:10px;color:#999;
+              display:flex;justify-content:space-between;
+              border:1px solid #e0e0e0;border-top:none;">
+    <span>Δοκιμασία Εργασιακών Συμπεριφορών · ΑΣΕΠ</span>
+    <span>Ταξινόμηση βάσει SHL UCF / OPQ32 — Ενιαίο Πλαίσιο Δεξιοτήτων ΔΥ</span>
+  </div>
+</div>`;
+}
+
+// ================================================================
+// ΤΕΛΟΣ CLASSIFICATION MODULE
+// ================================================================
+
+
 const SKILL_ICONS = {
   1: "🏛️", 2: "🤝", 3: "🔄", 4: "🎯",
   5: "📋", 6: "💡", 7: "⚖️", 8: "📚", 9: "🌟"
@@ -71,20 +395,16 @@ function computeResults(data, answers) {
 }
 
 function computeConsistency(data, answers) {
-  // Build lookup: stmtId -> score (3=first, 2=second, 1=third)
   const stmtScore = {};
   data.triads.forEach((triad, idx) => {
     const ans = answers[idx];
     if (!ans) return;
     triad.statements.forEach(stmt => {
-      if (stmt.id === ans.first)  stmtScore[stmt.id] = 3;
+      if (stmt.id === ans.first)       stmtScore[stmt.id] = 3;
       else if (stmt.id === ans.second) stmtScore[stmt.id] = 2;
       else if (stmt.id === ans.third)  stmtScore[stmt.id] = 1;
     });
   });
-
-  // COMPONENT 1 — Trait Stability (40%)
-  // For each skill, collect all scores and measure variance
   const skillScores = {};
   data.triads.forEach(triad => {
     triad.statements.forEach(stmt => {
@@ -102,9 +422,6 @@ function computeConsistency(data, answers) {
     totalVariance += variance;
   });
   const traitStability = Math.max(0, 1 - (totalVariance / (skillCount * 0.9)));
-
-  // COMPONENT 2 — Pair Consistency (40%)
-  // Same-skill pairs: if a skill scores high in one triad and low in another → inconsistency
   let pairInconsistencies = 0, pairsChecked = 0;
   if (data.consistency_pairs) {
     data.consistency_pairs.forEach(pair => {
@@ -113,17 +430,13 @@ function computeConsistency(data, answers) {
       if (scoreA !== undefined && scoreB !== undefined) {
         pairsChecked++;
         const diff = Math.abs(scoreA - scoreB);
-        if (diff === 2) pairInconsistencies += 1.0;   // Most vs Least: serious contradiction
-        else if (diff === 1) pairInconsistencies += 0.3; // mild inconsistency
+        if (diff === 2) pairInconsistencies += 1.0;
+        else if (diff === 1) pairInconsistencies += 0.3;
       }
     });
   }
   const pairConsistency = pairsChecked > 0
-    ? Math.max(0, 1 - (pairInconsistencies / pairsChecked))
-    : 1;
-
-  // COMPONENT 3 — Response Pattern / Faking Detection (20%)
-  // In a 76-triad ipsative test, expected: 76 firsts, 76 seconds, 76 thirds
+    ? Math.max(0, 1 - (pairInconsistencies / pairsChecked)) : 1;
   const allScores = Object.values(stmtScore);
   const total = allScores.length;
   let patternScore = 1;
@@ -139,7 +452,6 @@ function computeConsistency(data, answers) {
     ) / (total * 2);
     patternScore = Math.max(0, 1 - deviation);
   }
-
   const overall = 0.40 * traitStability + 0.40 * pairConsistency + 0.20 * patternScore;
   return {
     overall:         Math.round(overall         * 100),
@@ -150,9 +462,9 @@ function computeConsistency(data, answers) {
 }
 
 function getConsistencyMeta(score) {
-  if (score >= 80) return { label: "Υψηλή Συνέπεια", color: "#10B981", bg: "rgba(16,185,129,0.12)", border: "rgba(16,185,129,0.35)", badge: "✔", note: "Οι απαντήσεις παρουσιάζουν υψηλή αξιοπιστία και εσωτερική συνοχή." };
-  if (score >= 60) return { label: "Μέτρια Συνέπεια", color: "#F59E0B", bg: "rgba(245,158,11,0.10)", border: "rgba(245,158,11,0.35)", badge: "⚠", note: "Ορισμένες ασυνέπειες εντοπίστηκαν. Συνιστάται προσεκτική ερμηνεία." };
-  return                  { label: "Χαμηλή Συνέπεια", color: "#EF4444", bg: "rgba(239,68,68,0.10)",  border: "rgba(239,68,68,0.35)",  badge: "✖", note: "Σημαντικές αντιφάσεις εντοπίστηκαν. Τα αποτελέσματα ενδέχεται να μην είναι αξιόπιστα." };
+  if (score >= 80) return { label:"Υψηλή Συνέπεια",  color:"#10B981", bg:"rgba(16,185,129,0.12)",  border:"rgba(16,185,129,0.35)",  badge:"✔", note:"Οι απαντήσεις παρουσιάζουν υψηλή αξιοπιστία και εσωτερική συνοχή." };
+  if (score >= 60) return { label:"Μέτρια Συνέπεια",  color:"#F59E0B", bg:"rgba(245,158,11,0.10)",  border:"rgba(245,158,11,0.35)",  badge:"⚠", note:"Ορισμένες ασυνέπειες εντοπίστηκαν. Συνιστάται προσεκτική ερμηνεία." };
+  return               { label:"Χαμηλή Συνέπεια",  color:"#EF4444", bg:"rgba(239,68,68,0.10)",   border:"rgba(239,68,68,0.35)",   badge:"✖", note:"Σημαντικές αντιφάσεις εντοπίστηκαν. Τα αποτελέσματα ενδέχεται να μην είναι αξιόπιστα." };
 }
 
 function SpiderChart({ skillResults, size = 340 }) {
@@ -217,7 +529,6 @@ function generateReportHTML(candidateName, candidateCode, skillResults, date, co
     return pts.map((p, i) => `${i===0?"M":"L"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ") + " Z";
   }
   const colArr = Object.values(SKILL_COLORS);
-
   const svgSpider = `<svg width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
     ${rings.map(r=>`<path d="${ringPath(r)}" fill="none" stroke="#E2E8F0" stroke-width="1"/>`).join("")}
     ${skillResults.map((_,i)=>{const[x,y]=point(i,R);return`<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#E2E8F0" stroke-width="1"/>`;}).join("")}
@@ -259,6 +570,17 @@ function generateReportHTML(candidateName, candidateCode, skillResults, date, co
       </td>
     </tr>`).join("");
 
+  const cm = consistency ? getConsistencyMeta(consistency.overall) : null;
+  const borderCol = cm ? cm.color : "#94A3B8";
+  const components = [
+    { name:"Σταθερότητα χαρακτηριστικών", weight:"40%", value: cm ? consistency.traitStability  : "—",
+      definition:"Μετρά κατά πόσο ο υποψήφιος επιλέγει με συνέπεια δηλώσεις που αντιστοιχούν στις ίδιες δεξιότητες σε όλη τη διάρκεια της δοκιμασίας." },
+    { name:"Συνοχή ζευγών δηλώσεων",      weight:"40%", value: cm ? consistency.pairConsistency : "—",
+      definition:"Εξετάζει αν δηλώσεις που μετρούν την ίδια δεξιότητα σε διαφορετικές τριάδες λαμβάνουν συνεπείς βαθμολογίες." },
+    { name:"Μοτίβο απαντήσεων",            weight:"20%", value: cm ? consistency.patternScore    : "—",
+      definition:"Ανιχνεύει μη ρεαλιστικά μοτίβα επιλογών (faking good). Αναμένεται ισορροπημένη κατανομή μεταξύ 1ης, 2ης και 3ης επιλογής." },
+  ];
+
   return `<!DOCTYPE html>
 <html lang="el">
 <head>
@@ -291,12 +613,7 @@ function generateReportHTML(candidateName, candidateCode, skillResults, date, co
     .footer{padding:20px 64px;background:#F8FAFC;display:flex;justify-content:space-between;align-items:center}
     .footer-text{color:#94A3B8;font-size:12px}
     .print-btn{position:fixed;bottom:28px;right:28px;background:linear-gradient(135deg,#3B82F6,#6366F1);color:#fff;border:none;border-radius:12px;padding:14px 28px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(99,102,241,0.4);font-family:'Source Sans 3',sans-serif}
-    @media print{
-      body{background:#fff}
-      .print-btn{display:none}
-      .page{max-width:100%;box-shadow:none}
-      .cover,.cover-badge,thead{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    }
+    @media print{body{background:#fff}.print-btn{display:none}.page{max-width:100%;box-shadow:none}.cover,.cover-badge,thead{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
   </style>
 </head>
 <body>
@@ -312,23 +629,17 @@ function generateReportHTML(candidateName, candidateCode, skillResults, date, co
       <div class="meta-item"><label>Κορυφαία Δεξιότητα</label><value>${skillResults[0].name}</value></div>
     </div>
   </div>
-
   <div class="section">
     <h2 class="section-title">Αραχνόγραμμα Δεξιοτήτων</h2>
     <p class="section-sub">Κάθε άξονας εκφράζει το Ratio επίδοσης: <strong>Μόρια ÷ (Εμφανίσεις × 3)</strong><br>
     Υψηλότερη τιμή = ισχυρότερη τάση προς αυτή τη δεξιότητα στις αυθόρμητες επιλογές του υποψηφίου</p>
     <div class="spider-wrap">${svgSpider}</div>
   </div>
-
   <div class="section">
     <h2 class="section-title">Αναλυτικά Αποτελέσματα</h2>
     <p class="section-sub">Κατάταξη βάσει Ratio · Επιλογές: <span style="color:#10B981;font-weight:700">1η (3μόρια)</span> / <span style="color:#3B82F6;font-weight:700">2η (2μόρια)</span> / <span style="color:#94A3B8;font-weight:700">3η (1μόριο)</span></p>
     <table>
-      <thead>
-        <tr>
-          <th>#</th><th>Δεξιότητα</th><th>Ratio %</th><th>Μόρια</th><th>Εμφανίσεις</th><th>1η / 2η / 3η</th>
-        </tr>
-      </thead>
+      <thead><tr><th>#</th><th>Δεξιότητα</th><th>Ratio %</th><th>Μόρια</th><th>Εμφανίσεις</th><th>1η / 2η / 3η</th></tr></thead>
       <tbody>${tableRows}</tbody>
     </table>
     <div class="legend">
@@ -338,71 +649,36 @@ function generateReportHTML(candidateName, candidateCode, skillResults, date, co
       <span style="margin-left:auto;color:#94A3B8">Ratio = Μόρια ÷ (Εμφανίσεις × 3)</span>
     </div>
   </div>
-
-  ${(()=>{
-    const cm = consistency ? getConsistencyMeta(consistency.overall) : null;
-    const borderCol = cm ? cm.color : "#94A3B8";
-    const labelText = cm ? cm.label : "—";
-    const noteText  = cm ? cm.note  : "";
-    const overall   = cm ? consistency.overall         : "—";
-    const trait     = cm ? consistency.traitStability  : "—";
-    const pair      = cm ? consistency.pairConsistency : "—";
-    const pattern   = cm ? consistency.patternScore    : "—";
-    const components = [
-      {
-        name: "Σταθερότητα χαρακτηριστικών",
-        weight: "40%",
-        value: trait,
-        definition: "Μετρά κατά πόσο ο υποψήφιος επιλέγει με συνέπεια δηλώσεις που αντιστοιχούν στις ίδιες δεξιότητες σε όλη τη διάρκεια της δοκιμασίας. Χαμηλή σταθερότητα υποδηλώνει ότι το προφίλ δεξιοτήτων μεταβάλλεται σημαντικά από τριάδα σε τριάδα."
-      },
-      {
-        name: "Συνοχή ζευγών δηλώσεων",
-        weight: "40%",
-        value: pair,
-        definition: "Εξετάζει αν δηλώσεις που μετρούν την ίδια δεξιότητα και εμφανίζονται σε διαφορετικές τριάδες λαμβάνουν συνεπείς βαθμολογίες. Σοβαρή ασυνέπεια (π.χ. «1η επιλογή» σε μία τριάδα και «3η επιλογή» σε άλλη για την ίδια δεξιότητα) μειώνει τον δείκτη."
-      },
-      {
-        name: "Μοτίβο απαντήσεων",
-        weight: "20%",
-        value: pattern,
-        definition: "Ανιχνεύει μη ρεαλιστικά μοτίβα επιλογών, όπως συστηματική επιλογή κοινωνικά επιθυμητών δηλώσεων (faking good). Σε ένα ipsative τεστ 76 τριάδων, αναμένεται ισορροπημένη κατανομή μεταξύ 1ης, 2ης και 3ης επιλογής."
-      },
-    ];
-    return `<div class="section" style="border-left:5px solid ${borderCol};padding-left:59px;">
-      <h2 class="section-title">Δείκτης Συνέπειας Απαντήσεων</h2>
-      <p class="section-sub">Αξιολογεί την αξιοπιστία και εσωτερική συνοχή των επιλογών του υποψηφίου. <strong>Δεν επηρεάζει τη βαθμολογία δεξιοτήτων</strong> — λειτουργεί ως δείκτης εγκυρότητας για την ερμηνεία των αποτελεσμάτων.</p>
-      <div style="display:flex;align-items:center;gap:24px;margin-bottom:28px;padding:20px;background:#F8FAFC;border-radius:10px;">
-        <div style="font-size:56px;font-weight:800;color:${borderCol};font-family:'Source Sans 3',sans-serif;line-height:1;flex-shrink:0">${overall}%</div>
-        <div>
-          <div style="font-size:19px;font-weight:700;color:${borderCol};margin-bottom:6px">${labelText}</div>
-          <div style="color:#475569;font-size:13px;line-height:1.6;max-width:460px">${noteText}</div>
-        </div>
+  <div class="section" style="border-left:5px solid ${borderCol};padding-left:59px;">
+    <h2 class="section-title">Δείκτης Συνέπειας Απαντήσεων</h2>
+    <p class="section-sub">Αξιολογεί την αξιοπιστία και εσωτερική συνοχή των επιλογών του υποψηφίου. <strong>Δεν επηρεάζει τη βαθμολογία δεξιοτήτων</strong> — λειτουργεί ως δείκτης εγκυρότητας.</p>
+    <div style="display:flex;align-items:center;gap:24px;margin-bottom:28px;padding:20px;background:#F8FAFC;border-radius:10px;">
+      <div style="font-size:56px;font-weight:800;color:${borderCol};line-height:1;flex-shrink:0">${cm ? consistency.overall : "—"}%</div>
+      <div>
+        <div style="font-size:19px;font-weight:700;color:${borderCol};margin-bottom:6px">${cm ? cm.label : "—"}</div>
+        <div style="color:#475569;font-size:13px;line-height:1.6;max-width:460px">${cm ? cm.note : ""}</div>
       </div>
-      <table style="width:100%;border-collapse:collapse;font-size:13px">
-        <thead>
-          <tr style="background:#0F172A;color:#fff">
-            <th style="padding:11px 14px;text-align:left;width:22%">Συνιστώσα</th>
-            <th style="padding:11px 14px;text-align:left">Ορισμός</th>
-            <th style="padding:11px 14px;text-align:center;width:9%">Βαρύτητα</th>
-            <th style="padding:11px 14px;text-align:center;width:9%">Τιμή</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${components.map((c, i) => `
-          <tr style="background:${i%2===0?"#F8FAFC":"#fff"};vertical-align:top">
-            <td style="padding:13px 14px;font-weight:700;color:#1E293B">${c.name}</td>
-            <td style="padding:13px 14px;color:#475569;line-height:1.55">${c.definition}</td>
-            <td style="padding:13px 14px;text-align:center;color:#64748B;font-weight:600">${c.weight}</td>
-            <td style="padding:13px 14px;text-align:center;font-weight:800;font-size:15px;color:${borderCol}">${c.value}%</td>
-          </tr>`).join("")}
-        </tbody>
-      </table>
-      <p style="margin-top:16px;font-size:12px;color:#94A3B8;font-style:italic">
-        ⚠️ Σύμφωνα με τη μεθοδολογία SHL OPQ32: δείκτης &lt;60% υποδηλώνει ότι τα αποτελέσματα χρήζουν προσεκτικής ερμηνείας και ενδέχεται να απαιτηθεί επανεξέταση μέσω δομημένης συνέντευξης.
-      </p>
-    </div>`;
-  })()}
-
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="background:#0F172A;color:#fff">
+        <th style="padding:11px 14px;text-align:left;width:22%">Συνιστώσα</th>
+        <th style="padding:11px 14px;text-align:left">Ορισμός</th>
+        <th style="padding:11px 14px;text-align:center;width:9%">Βαρύτητα</th>
+        <th style="padding:11px 14px;text-align:center;width:9%">Τιμή</th>
+      </tr></thead>
+      <tbody>${components.map((c,i)=>`
+        <tr style="background:${i%2===0?"#F8FAFC":"#fff"};vertical-align:top">
+          <td style="padding:13px 14px;font-weight:700;color:#1E293B">${c.name}</td>
+          <td style="padding:13px 14px;color:#475569;line-height:1.55">${c.definition}</td>
+          <td style="padding:13px 14px;text-align:center;color:#64748B;font-weight:600">${c.weight}</td>
+          <td style="padding:13px 14px;text-align:center;font-weight:800;font-size:15px;color:${borderCol}">${c.value}%</td>
+        </tr>`).join("")}
+      </tbody>
+    </table>
+    <p style="margin-top:16px;font-size:12px;color:#94A3B8;font-style:italic">
+      ⚠️ Σύμφωνα με τη μεθοδολογία SHL OPQ32: δείκτης &lt;60% υποδηλώνει ότι τα αποτελέσματα χρήζουν προσεκτικής ερμηνείας.
+    </p>
+  </div>
   <div class="footer">
     <span class="footer-text">Δοκιμασία Εργασιακών Συμπεριφορών · ΑΣΕΠ 2026</span>
     <span class="footer-text">⚠️ Εμπιστευτικό έγγραφο</span>
@@ -536,6 +812,15 @@ function ResultsScreen({ data, answers, candidateName, candidateCode, onRestart 
   const consistency  = computeConsistency(data, answers);
   const date = new Date().toLocaleDateString("el-GR",{day:"numeric",month:"long",year:"numeric"});
 
+  // ── Classification + Role-Fit ──────────────────────────────
+  const [selectedCatId, setSelectedCatId] = useState("");
+  const normalizedScores = Object.fromEntries(
+    skillResults.map(s => [s.code, s.ratio])
+  );
+  const classResult = classifyCandidate(normalizedScores);
+  const fitResult   = assessRoleFit(normalizedScores, selectedCatId || null);
+  // ──────────────────────────────────────────────────────────
+
   function openReport() {
     const html = generateReportHTML(candidateName, candidateCode, skillResults, date, consistency);
     const win = window.open("","_blank");
@@ -549,9 +834,11 @@ function ResultsScreen({ data, answers, candidateName, candidateCode, onRestart 
         <div style={styles.resultsBadge}>Αποτελέσματα</div>
         <h2 style={styles.resultsTitle}>Το προφίλ σας</h2>
         <p style={styles.resultsSubtitle}><strong>{candidateName}</strong> · Κορυφαία: <strong>{skillResults[0].name}</strong> {SKILL_ICONS[skillResults[0].code]}</p>
+
         <div style={{display:"flex",justifyContent:"center",margin:"20px 0"}}>
           <SpiderChart skillResults={skillResults} size={320}/>
         </div>
+
         <div style={styles.skillGrid}>
           {skillResults.map((skill,rank)=>(
             <div key={skill.code} style={styles.skillRow}>
@@ -569,11 +856,40 @@ function ResultsScreen({ data, answers, candidateName, candidateCode, onRestart 
             </div>
           ))}
         </div>
-        <div style={{display:"flex",gap:12,flexWrap:"wrap",marginTop:8}}>
+
+        {/* ── Επιλογή κατηγορίας θέσης ── */}
+        <div style={{margin:"28px 0 8px",textAlign:"left"}}>
+          <label style={{fontSize:13,color:"#94A3B8",display:"block",marginBottom:8,fontFamily:"sans-serif"}}>
+            🎯 Κατηγορία θέσης εργασίας
+            <span style={{color:"#64748B",fontWeight:400}}> — επιλέξτε για αξιολόγηση καταλληλότητας</span>
+          </label>
+          <select
+            value={selectedCatId}
+            onChange={e => setSelectedCatId(e.target.value)}
+            style={{fontSize:14,padding:"10px 14px",borderRadius:10,border:"1px solid #334155",
+                    background:"#1E293B",color:"#E2E8F0",width:"100%",maxWidth:460,fontFamily:"sans-serif"}}>
+            <option value="">— Χωρίς αξιολόγηση θέσης —</option>
+            <option value="leadership">Ηγετικά &amp; Επιτελικά Στελέχη</option>
+            <option value="frontoffice">Εξυπηρέτηση &amp; Πρώτη Γραμμή</option>
+            <option value="analyst">Αναλυτές &amp; Εμπειρογνώμονες</option>
+            <option value="backoffice">Back-office &amp; Διαχείριση</option>
+            <option value="innovation">Καινοτομία &amp; Ψηφιακός Μετ/σμός</option>
+            <option value="field">Πεδίου &amp; Επιθεωρητές</option>
+          </select>
+        </div>
+
+        {/* ── Classification + Role-Fit block ── */}
+        <div
+          style={{marginTop:8,textAlign:"left"}}
+          dangerouslySetInnerHTML={{__html:
+            renderClassificationReport(classResult, candidateName, normalizedScores, fitResult)
+          }}
+        />
+
+        <div style={{display:"flex",gap:12,flexWrap:"wrap",marginTop:24}}>
           <button style={styles.reportBtn} onClick={openReport}>📄 Αναλυτική Αναφορά (νέο tab)</button>
           <button style={styles.restartBtn} onClick={onRestart}>🔄 Νέα Δοκιμασία</button>
         </div>
-
 
       </div>
     </div>
@@ -673,20 +989,20 @@ const styles = {
   navBtnSecondary:{background:"#F1F5F9",color:"#64748B"},
   navBtnPrimary:{background:"linear-gradient(135deg,#3B82F6,#6366F1)",color:"#fff",boxShadow:"0 4px 16px rgba(99,102,241,0.3)"},
   navBtnFinish:{background:"linear-gradient(135deg,#10B981,#059669)",color:"#fff",boxShadow:"0 4px 16px rgba(16,185,129,0.3)"},
-  results:{minHeight:"100vh",background:"linear-gradient(135deg,#0F172A 0%,#1E3A5F 50%,#0F172A 100%)",display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"40px 24px",fontFamily:"sans-serif"},
-  resultsInner:{maxWidth:700,width:"100%"},
-  resultsBadge:{display:"inline-block",background:"rgba(16,185,129,0.2)",border:"1px solid rgba(16,185,129,0.5)",color:"#6EE7B7",padding:"4px 16px",borderRadius:999,fontSize:13,letterSpacing:".1em",textTransform:"uppercase",marginBottom:16},
-  resultsTitle:{color:"#F1F5F9",fontSize:36,fontWeight:700,margin:"0 0 8px",fontFamily:"Georgia,serif"},
-  resultsSubtitle:{color:"#94A3B8",fontSize:16,margin:"0 0 16px"},
-  skillGrid:{display:"flex",flexDirection:"column",gap:10,marginBottom:28},
-  skillRow:{display:"flex",alignItems:"center",gap:16,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:14},
-  skillRankNum:{color:"#475569",fontSize:14,fontWeight:700,minWidth:32,flexShrink:0},
+  results:{minHeight:"100vh",background:"linear-gradient(135deg,#0F172A 0%,#1E3A5F 50%,#0F172A 100%)",display:"flex",justifyContent:"center",padding:"32px 16px",fontFamily:"sans-serif"},
+  resultsInner:{maxWidth:680,width:"100%"},
+  resultsBadge:{display:"inline-block",background:"rgba(16,185,129,0.2)",border:"1px solid rgba(16,185,129,0.4)",color:"#6EE7B7",padding:"4px 16px",borderRadius:999,fontSize:13,letterSpacing:".1em",textTransform:"uppercase",marginBottom:16},
+  resultsTitle:{color:"#F1F5F9",fontSize:32,fontWeight:700,margin:"0 0 6px",fontFamily:"Georgia,serif"},
+  resultsSubtitle:{color:"#94A3B8",fontSize:16,margin:"0 0 8px"},
+  skillGrid:{display:"flex",flexDirection:"column",gap:10,marginBottom:8},
+  skillRow:{display:"flex",alignItems:"center",gap:12,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:12,padding:"14px 16px"},
+  skillRankNum:{color:"#64748B",fontSize:13,fontWeight:700,minWidth:28},
   skillInfo:{flex:1},
   skillHeader:{display:"flex",alignItems:"center",gap:8,marginBottom:6},
   skillName:{color:"#E2E8F0",fontSize:14,fontWeight:600,flex:1},
-  skillPct:{color:"#94A3B8",fontSize:14,fontWeight:700},
-  skillBarBg:{height:7,background:"rgba(255,255,255,0.1)",borderRadius:999,overflow:"hidden"},
-  skillBarFill:{height:"100%",borderRadius:999,transition:"width 0.8s cubic-bezier(0.4,0,0.2,1)"},
-  reportBtn:{background:"linear-gradient(135deg,#3B82F6,#6366F1)",border:"none",color:"#fff",borderRadius:10,padding:"13px 28px",fontSize:15,fontWeight:700,cursor:"pointer",boxShadow:"0 4px 16px rgba(99,102,241,0.35)"},
-  restartBtn:{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.15)",color:"#E2E8F0",borderRadius:10,padding:"13px 28px",fontSize:15,fontWeight:600,cursor:"pointer"},
+  skillPct:{color:"#F1F5F9",fontSize:16,fontWeight:800},
+  skillBarBg:{height:6,background:"rgba(255,255,255,0.1)",borderRadius:999,overflow:"hidden"},
+  skillBarFill:{height:"100%",borderRadius:999,transition:"width 0.6s ease"},
+  reportBtn:{background:"linear-gradient(135deg,#3B82F6,#6366F1)",color:"#fff",border:"none",borderRadius:10,padding:"12px 24px",fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif"},
+  restartBtn:{background:"rgba(255,255,255,0.08)",color:"#CBD5E1",border:"1px solid rgba(255,255,255,0.15)",borderRadius:10,padding:"12px 24px",fontSize:14,fontWeight:600,cursor:"pointer",fontFamily:"sans-serif"},
 };
