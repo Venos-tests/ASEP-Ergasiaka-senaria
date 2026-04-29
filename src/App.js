@@ -598,7 +598,7 @@ function ResultsScreen({ data, answers, candidateName, candidateCode, onRestart 
         <p style={styles.resultsSubtitle}><strong>{candidateName}</strong> · Κορυφαία: <strong>{skillResults[0].name}</strong> {SKILL_ICONS[skillResults[0].code]}</p>
 
         <div style={{display:"flex",justifyContent:"center",margin:"20px 0",background:"#F8FBFF",borderRadius:16,padding:16}}>
-          <SpiderChart skillResults={skillResults} size={320}/>
+          <SpiderChart skillResults={skillResults} size={420}/>
         </div>
 
         <div style={styles.skillGrid}>
