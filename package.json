@@ -2,7 +2,7 @@
   "name": "asep-ergasiaka-senaria",
   "version": "1.0.0",
   "private": true,
-  "homepage": "https://venos-tests.github.io/ASEP-Ergasiaka-senaria",
+
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
