@@ -934,6 +934,13 @@ export default function App() {
       .catch(()=>setError("Δεν ήταν δυνατή η φόρτωση των δεδομένων."));
   },[]);
 
+  // Αλλάζει το body background ανάλογα με το screen
+  // ώστε να μην φαίνεται σκούρο χρώμα κάτω από το triad screen
+  useEffect(()=>{
+    document.body.style.background = screen==="test" ? "#F8FAFC" : "#0F172A";
+    return ()=>{ document.body.style.background="#0F172A"; };
+  },[screen]);
+
   const handleExpire = useCallback(()=>{setTimerActive(false);setScreen("timeup");},[]);
   const timerProps = useTimer(timerActive, handleExpire);
 
@@ -973,7 +980,7 @@ const styles = {
   instrLine:{color:"#CBD5E1",fontSize:14,margin:"6px 0",display:"flex",gap:8,fontFamily:"sans-serif"},
   instrBullet:{color:"#3B82F6",flexShrink:0,fontSize:16},
   startBtn:{background:"linear-gradient(135deg,#3B82F6,#6366F1)",color:"#fff",border:"none",borderRadius:12,padding:"16px 48px",fontSize:18,fontWeight:700,cursor:"pointer",fontFamily:"sans-serif",boxShadow:"0 4px 24px rgba(99,102,241,0.4)"},
-  triadScreen:{minHeight:"auto",background:"#F8FAFC",display:"flex",flexDirection:"column",fontFamily:"sans-serif",paddingBottom:24},
+  triadScreen:{minHeight:"100vh",background:"#F8FAFC",display:"flex",flexDirection:"column",fontFamily:"sans-serif"},
   header:{background:"#fff",borderBottom:"1px solid #E2E8F0",padding:"12px 24px",display:"flex",alignItems:"center",gap:12,position:"sticky",top:0,zIndex:10,flexWrap:"wrap"},
   triadBadge:{background:"#EFF6FF",color:"#3B82F6",border:"1px solid #BFDBFE",borderRadius:999,padding:"4px 12px",fontSize:13,fontWeight:600,flexShrink:0},
   progressBar:{flex:1,height:8,background:"#E2E8F0",borderRadius:999,overflow:"hidden",minWidth:60},
