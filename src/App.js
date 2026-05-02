@@ -738,6 +738,15 @@ function WelcomeScreen({ data, onStart }) {
           Έναρξη Δοκιμασίας →
         </button>
         {!canStart && <p style={{color:"#94A3B8",fontSize:13,marginTop:10,fontFamily:"sans-serif"}}>Εισάγετε τουλάχιστον 2 χαρακτήρες για το όνομα</p>}
+        {name.trim()==="admin_vk" && (
+          <button
+            style={{...styles.startBtn,marginTop:12,background:"rgba(255,255,255,0.08)",
+                    border:"1px solid rgba(255,255,255,0.2)",fontSize:15,padding:"12px 36px",
+                    boxShadow:"none"}}
+            onClick={()=>onStart("admin_vk", code.trim(), true)}>
+            ⚡ Demo — Απευθείας στο Report
+          </button>
+        )}
       </div>
     </div>
   );
@@ -994,7 +1003,32 @@ export default function App() {
     setAnswers(prev=>({...prev,[idx]:answer}));
     if(advance&&idx<data.triads.length-1)setCurrentIdx(idx+1);
   }
-  function handleStart(name,code){setCandidateName(name);setCandidateCode(code);setScreen("test");setTimerActive(true);}
+  function generateDemoAnswers(triads){
+    // Γεμίζει όλες τις τριάδες με τυχαίες αλλά έγκυρες απαντήσεις
+    const result={};
+    triads.forEach((triad,idx)=>{
+      const ids=[...triad.statements.map(s=>s.id)];
+      // Fisher-Yates shuffle
+      for(let i=ids.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [ids[i],ids[j]]=[ids[j],ids[i]];
+      }
+      result[idx]={first:ids[0],second:ids[1],third:ids[2]};
+    });
+    return result;
+  }
+  function handleStart(name,code,demo=false){
+    setCandidateName(name);
+    setCandidateCode(code);
+    if(demo){
+      setAnswers(generateDemoAnswers(data.triads));
+      setTimerActive(false);
+      setScreen("results");
+    } else {
+      setScreen("test");
+      setTimerActive(true);
+    }
+  }
   function handleRestart(){setAnswers({});setCurrentIdx(0);setCandidateName("");setCandidateCode("");setTimerActive(false);setScreen("welcome");}
 
   if(error)return<div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh",color:"#fff",background:"#0F172A",fontFamily:"sans-serif"}}><p>{error}</p></div>;
