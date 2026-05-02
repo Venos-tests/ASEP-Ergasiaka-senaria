@@ -4,20 +4,20 @@ import { useState, useEffect, useRef, useCallback } from "react";
 // CLASSIFICATION MODULE v2.0 — ενσωματωμένο στο App.js
 // ================================================================
 
-// Cutoffs βάσει εμπειρικής κατανομής ΑΣΕΠ 2025 (N=30.097, mean=53.84%, SD=17.22%)
+// Cutoffs βάσει εμπειρικής κατανομής ΑΣΕΠ 2025 (N=30.097, mean=55.42%, SD=10.56%)
 // P60 = 62%  P80 = 69% — ενιαία για όλες τις δεξιότητες
 // Εύρος P60–P80 = 7% (διακριτό και ερμηνεύσιμο)
 // Πηγή: στατιστικά αποτελεσμάτων Γραπτού Διαγωνισμού ΑΣΕΠ 1Γ/2025
 const SKILLS = {
-  1: { name: "Προσανατολισμός στον πολίτη",            maxScore: 40, p60: 0.620, p80: 0.690 },
-  2: { name: "Ομαδικότητα",                            maxScore: 69, p60: 0.620, p80: 0.690 },
-  3: { name: "Προσαρμοστικότητα",                      maxScore: 57, p60: 0.620, p80: 0.690 },
-  4: { name: "Προσανατολισμός στο αποτέλεσμα",         maxScore: 46, p60: 0.620, p80: 0.690 },
-  5: { name: "Οργάνωση & προγραμματισμός",             maxScore: 56, p60: 0.620, p80: 0.690 },
-  6: { name: "Επίλυση προβλημάτων & δημιουργικότητα",  maxScore: 44, p60: 0.620, p80: 0.690 },
-  7: { name: "Επαγγελματισμός & ακεραιότητα",          maxScore: 60, p60: 0.620, p80: 0.690 },
-  8: { name: "Διαχείριση γνώσης",                      maxScore: 50, p60: 0.620, p80: 0.690 },
-  9: { name: "Ηγετικότητα",                            maxScore: 34, p60: 0.620, p80: 0.690 },
+  1: { name: "Προσανατολισμός στον πολίτη",            maxScore: 40, p60: 0.600, p80: 0.690 },
+  2: { name: "Ομαδικότητα",                            maxScore: 69, p60: 0.600, p80: 0.690 },
+  3: { name: "Προσαρμοστικότητα",                      maxScore: 57, p60: 0.600, p80: 0.690 },
+  4: { name: "Προσανατολισμός στο αποτέλεσμα",         maxScore: 46, p60: 0.600, p80: 0.690 },
+  5: { name: "Οργάνωση & προγραμματισμός",             maxScore: 56, p60: 0.600, p80: 0.690 },
+  6: { name: "Επίλυση προβλημάτων & δημιουργικότητα",  maxScore: 44, p60: 0.600, p80: 0.690 },
+  7: { name: "Επαγγελματισμός & ακεραιότητα",          maxScore: 60, p60: 0.600, p80: 0.690 },
+  8: { name: "Διαχείριση γνώσης",                      maxScore: 50, p60: 0.600, p80: 0.690 },
+  9: { name: "Ηγετικότητα",                            maxScore: 34, p60: 0.600, p80: 0.690 },
 };
 
 const PROFILE_CATEGORIES = [
@@ -224,7 +224,7 @@ function renderClassificationReport(classResult, candidateName, normalizedScores
       Πλήρες προφίλ δεξιοτήτων
       ${fit ? `<span style="font-weight:400;text-transform:none;letter-spacing:0;"> — ★ κρίσιμες &nbsp;
         <span style="color:#1E8449;">▏</span>P80=69% &nbsp;
-        <span style="color:#E67E22;">▏</span>P60=62%</span>` : ''}
+        <span style="color:#E67E22;">▏</span>P60=60%</span>` : ''}
     </div>
     ${Object.entries(SKILLS).map(([code, sk]) => {
       const val = ns[+code] || 0, pct = Math.round(val * 100);
@@ -255,8 +255,8 @@ function renderClassificationReport(classResult, candidateName, normalizedScores
   <div style="background:#f5f5f5;border:1px solid #e0e0e0;border-top:none;padding:9px 22px;">
     <div style="font-size:10px;color:#bbb;line-height:1.6;">
       <strong style="color:#aaa;">Μεθοδολογία cutoffs:</strong>
-      P60=62% και P80=69% βάσει εμπειρικής κατανομής 30.097 υποψηφίων
-      Γραπτού Διαγωνισμού ΑΣΕΠ 1Γ/2025 (mean=53.84%, SD=17.22%).
+      P60=60% και P80=69% βάσει εμπειρικής κατανομής 30.111 υποψηφίων
+      Γραπτού Διαγωνισμού ΑΣΕΠ 1Γ/2025 (mean=55.42%, SD=10.56%).
       Ενιαία κατώφλια για όλες τις δεξιότητες — εύρος P60–P80: 7%.
       Τα κατώφλια θα επικαιροποιούνται με νεότερα στατιστικά στοιχεία.
     </div>
