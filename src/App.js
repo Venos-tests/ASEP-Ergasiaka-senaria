@@ -443,27 +443,46 @@ function computeConsistency(data, answers) {
   }
   const pairConsistency = pairsChecked > 0
     ? Math.max(0, 1 - (pairInconsistencies / pairsChecked)) : 1;
-  const allScores = Object.values(stmtScore);
-  const total = allScores.length;
-  let patternScore = 1;
-  if (total > 0) {
-    const mostCount  = allScores.filter(v => v === 3).length;
-    const midCount   = allScores.filter(v => v === 2).length;
-    const leastCount = allScores.filter(v => v === 1).length;
-    const expected = total / 3;
-    const deviation = (
-      Math.abs(mostCount  - expected) +
-      Math.abs(midCount   - expected) +
-      Math.abs(leastCount - expected)
-    ) / (total * 2);
-    patternScore = Math.max(0, 1 - deviation);
+  // ── Position Bias Index ────────────────────────────────────────
+  // Μετράει αν ο υποψήφιος επιλέγει συστηματικά δηλώσεις
+  // βάσει της θέσης τους στην τριάδα (Α/Β/Γ) αντί του περιεχομένου.
+  // Αναμενόμενο: ~33% κάθε θέση ως 1η επιλογή.
+  // >60% μία θέση → πιθανό lazy responding.
+  const positionCount = { 1: 0, 2: 0, 3: 0 }; // θέση stmt που επιλέχθηκε 1η
+  let triadsWithFirst = 0;
+  data.triads.forEach((triad, idx) => {
+    const ans = answers[idx];
+    if (!ans || !ans.first) return;
+    const firstStmt = triad.statements.find(s => s.id === ans.first);
+    if (firstStmt && firstStmt.position) {
+      positionCount[firstStmt.position] = (positionCount[firstStmt.position] || 0) + 1;
+      triadsWithFirst++;
+    }
+  });
+  let positionBias = 1;
+  if (triadsWithFirst > 0) {
+    const maxPositionPct = Math.max(...Object.values(positionCount)) / triadsWithFirst;
+    // 33% = τυχαίο, 60% = όριο, >60% = lazy responding
+    // Score: 1.0 στο 33%, 0.0 στο 75%+
+    positionBias = Math.max(0, 1 - Math.max(0, (maxPositionPct - 0.33) / 0.42));
   }
-  const overall = 0.40 * traitStability + 0.40 * pairConsistency + 0.20 * patternScore;
+  // Αποθηκεύουμε και το raw % για εμφάνιση στο report
+  const maxPosPct = triadsWithFirst > 0
+    ? Math.round(Math.max(...Object.values(positionCount)) / triadsWithFirst * 100)
+    : 33;
+  const dominantPos = triadsWithFirst > 0
+    ? ['—','Α (1η)','Β (2η)','Γ (3η)'][
+        Object.entries(positionCount).sort((a,b)=>b[1]-a[1])[0][0]
+      ] : '—';
+
+  const overall = 0.40 * traitStability + 0.40 * pairConsistency + 0.20 * positionBias;
   return {
-    overall:         Math.round(overall         * 100),
-    traitStability:  Math.round(traitStability  * 100),
-    pairConsistency: Math.round(pairConsistency * 100),
-    patternScore:    Math.round(patternScore    * 100),
+    overall:         Math.round(overall          * 100),
+    traitStability:  Math.round(traitStability   * 100),
+    pairConsistency: Math.round(pairConsistency  * 100),
+    positionBias:    Math.round(positionBias     * 100),
+    maxPosPct,
+    dominantPos,
   };
 }
 
@@ -583,8 +602,8 @@ function generateReportHTML(candidateName, candidateCode, skillResults, date, co
       definition:"Μετρά κατά πόσο ο υποψήφιος επιλέγει με συνέπεια δηλώσεις που αντιστοιχούν στις ίδιες δεξιότητες σε όλη τη διάρκεια της δοκιμασίας." },
     { name:"Συνοχή ζευγών δηλώσεων",      weight:"40%", value: cm ? consistency.pairConsistency : "—",
       definition:"Εξετάζει αν δηλώσεις που μετρούν την ίδια δεξιότητα σε διαφορετικές τριάδες λαμβάνουν συνεπείς βαθμολογίες." },
-    { name:"Μοτίβο απαντήσεων",            weight:"20%", value: cm ? consistency.patternScore    : "—",
-      definition:"Ανιχνεύει μη ρεαλιστικά μοτίβα επιλογών (faking good). Αναμένεται ισορροπημένη κατανομή μεταξύ 1ης, 2ης και 3ης επιλογής." },
+    { name:"Δείκτης Θέσης Επιλογής",       weight:"20%", value: cm ? consistency.positionBias    : "—",
+      definition:`Ανιχνεύει αν ο υποψήφιος επιλέγει συστηματικά δηλώσεις βάσει της θέσης τους στην τριάδα (Α/Β/Γ) αντί του περιεχομένου τους — ένδειξη επιφανειακής ανάγνωσης (lazy responding). Αναμενόμενο: ~33% κάθε θέση. Κυρίαρχη θέση: ${cm ? consistency.dominantPos : '—'} (${cm ? consistency.maxPosPct : '—'}% των 1ων επιλογών).` },
   ];
 
   return `<!DOCTYPE html>
