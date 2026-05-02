@@ -709,7 +709,7 @@ function WelcomeScreen({ data, onStart }) {
           <h3 style={styles.candidateTitle}>Στοιχεία Υποψηφίου</h3>
           <div style={styles.fieldGroup}>
             <label style={styles.fieldLabel}>Όνομα / Nickname <span style={{color:"#EF4444"}}>*</span></label>
-            <input style={styles.fieldInput} type="text" placeholder="π.χ. Γιώργης ή user_42"
+            <input style={styles.fieldInput} type="text" placeholder="Εισάγετε το όνομά σας"
               value={name} onChange={e=>setName(e.target.value)} maxLength={50}/>
           </div>
           <div style={{...styles.fieldGroup, marginBottom:0}}>
@@ -829,9 +829,17 @@ function ResultsScreen({ data, answers, candidateName, candidateCode, onRestart 
 
   function openReport() {
     const html = generateReportHTML(candidateName, candidateCode, skillResults, date, consistency);
-    const win = window.open("","_blank");
-    win.document.write(html);
-    win.document.close();
+    // Δημιουργία Blob και download — λειτουργεί και μέσα σε iframe
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = `ASEP_Report_${candidateName.replace(/\s+/g,"_")}.html`;
+    a.target   = "_blank";          // fallback: ανοίγει νέο tab αν το download αποτύχει
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
   }
 
   return (
@@ -893,7 +901,7 @@ function ResultsScreen({ data, answers, candidateName, candidateCode, onRestart 
         />
 
         <div style={{display:"flex",gap:12,flexWrap:"wrap",marginTop:24}}>
-          <button style={styles.reportBtn} onClick={openReport}>📄 Αναλυτική Αναφορά (νέο tab)</button>
+          <button style={styles.reportBtn} onClick={openReport}>📄 Λήψη Αναλυτικής Αναφοράς</button>
           <button style={styles.restartBtn} onClick={onRestart}>🔄 Νέα Δοκιμασία</button>
         </div>
 
