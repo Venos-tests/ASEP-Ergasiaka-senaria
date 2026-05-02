@@ -827,19 +827,28 @@ function ResultsScreen({ data, answers, candidateName, candidateCode, onRestart 
   const fitResult   = assessRoleFit(normalizedScores, selectedCatId || null);
   // ──────────────────────────────────────────────────────────
 
-  function openReport() {
+  const [showReport, setShowReport] = useState(false);
+  const reportRef = useRef(null);
+
+  function handlePrint() {
     const html = generateReportHTML(candidateName, candidateCode, skillResults, date, consistency);
-    // Δημιουργία Blob και download — λειτουργεί και μέσα σε iframe
-    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement("a");
-    a.href     = url;
-    a.download = `ASEP_Report_${candidateName.replace(/\s+/g,"_")}.html`;
-    a.target   = "_blank";          // fallback: ανοίγει νέο tab αν το download αποτύχει
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 3000);
+    // Βάζουμε το report σε hidden iframe και καλούμε print() εκεί
+    const iframe = document.createElement("iframe");
+    iframe.style.cssText = "position:fixed;top:-9999px;left:-9999px;width:800px;height:600px;";
+    document.body.appendChild(iframe);
+    iframe.contentDocument.open();
+    iframe.contentDocument.write(html);
+    iframe.contentDocument.close();
+    iframe.onload = () => {
+      try {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      } catch(e) {
+        // fallback: εμφανίζει inline
+        setShowReport(true);
+      }
+      setTimeout(() => document.body.removeChild(iframe), 2000);
+    };
   }
 
   return (
@@ -901,9 +910,38 @@ function ResultsScreen({ data, answers, candidateName, candidateCode, onRestart 
         />
 
         <div style={{display:"flex",gap:12,flexWrap:"wrap",marginTop:24}}>
-          <button style={styles.reportBtn} onClick={openReport}>📄 Λήψη Αναλυτικής Αναφοράς</button>
+          <button style={styles.reportBtn} onClick={handlePrint}>🖨️ Εκτύπωση Αναφοράς</button>
+          <button style={{...styles.reportBtn,background:"linear-gradient(135deg,#0E6655,#10B981)"}}
+            onClick={()=>setShowReport(v=>!v)}>
+            {showReport ? "▲ Απόκρυψη Αναφοράς" : "📄 Προβολή Αναφοράς"}
+          </button>
           <button style={styles.restartBtn} onClick={onRestart}>🔄 Νέα Δοκιμασία</button>
         </div>
+
+        {/* ── Inline report (εκτυπώσιμο) ── */}
+        {showReport && (
+          <div ref={reportRef} style={{marginTop:24,background:"#fff",borderRadius:12,
+                                       overflow:"hidden",boxShadow:"0 4px 24px rgba(0,0,0,0.15)"}}>
+            <div style={{padding:"12px 20px",background:"#1E293B",display:"flex",
+                         justifyContent:"space-between",alignItems:"center"}}>
+              <span style={{color:"#94A3B8",fontSize:13,fontFamily:"sans-serif"}}>
+                Αναλυτική Αναφορά — {candidateName}
+              </span>
+              <button onClick={handlePrint}
+                style={{background:"linear-gradient(135deg,#3B82F6,#6366F1)",color:"#fff",
+                        border:"none",borderRadius:8,padding:"6px 16px",fontSize:13,
+                        fontWeight:600,cursor:"pointer",fontFamily:"sans-serif"}}>
+                🖨️ Εκτύπωση / PDF
+              </button>
+            </div>
+            <iframe
+              srcDoc={generateReportHTML(candidateName, candidateCode, skillResults, date, consistency)}
+              style={{width:"100%",border:"none",minHeight:"900px"}}
+              title="Αναλυτική Αναφορά"
+              scrolling="yes"
+            />
+          </div>
+        )}
 
       </div>
     </div>
